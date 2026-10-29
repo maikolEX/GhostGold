@@ -13,7 +13,8 @@
     <application
         android:label="GHOST GOLD"
         android:icon="@drawable/icon"
-        android:theme="@style/GhostGold">
+        android:theme="@style/GhostGold"
+        android:largeHeap="true">
 
         <activity
             android:name=".HomeActivity"

@@ -24,7 +24,7 @@ import android.view.animation.LinearInterpolator;
 public class Stage extends View {
 
     private final Bitmap front, lights, rear;
-    private final Bitmap[] turn8 = new Bitmap[8]; // 360° views every 45°, starting from the front
+    private final java.util.List<Bitmap> turnViews = new java.util.ArrayList<>(); // 360° views, evenly spaced, from the front
     private Bitmap mirrored;
     private float lightsOn;     // 0..1 cross-fade to the headlights photo
     private float dim = 1f;     // halo strength (lower at night)
@@ -47,7 +47,11 @@ public class Stage extends View {
         front = load(c, "car");
         lights = load(c, "car_lights");
         rear = load(c, "car_rear");
-        for (int i = 0; i < 8; i++) turn8[i] = load(c, "spin_" + i);
+        for (int i = 0; i < 64; i++) {
+            Bitmap b = load(c, String.format(java.util.Locale.US, "spin_%02d", i));
+            if (b == null) break;
+            turnViews.add(b);
+        }
         orbit.setStyle(Paint.Style.STROKE);
         orbit.setStrokeWidth(G.dp(c, 1));
         fade.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_IN));
@@ -78,7 +82,7 @@ public class Stage extends View {
         turn.addUpdateListener(a -> {
             float t = (float) a.getAnimatedValue();
             // Start from view 1 (the photo on the home screen) so the turn begins without a jump.
-            angle = full() ? (45f + t * 360f) % 360f : rear != null ? t * 360f : -1f;
+            angle = full() ? (start() + t * 360f) % 360f : rear != null ? t * 360f : -1f;
             float s = (t * 4f) % 1f;            // four sweeps per turn, one per view
             sweep = s < 0.55f ? s / 0.55f : -1f;
             breathe = (float) (0.5 - 0.5 * Math.cos(t * Math.PI * 6));
@@ -90,8 +94,12 @@ public class Stage extends View {
     RectF truck() { return box; }
 
     private boolean full() {
-        for (Bitmap b : turn8) if (b == null) return false;
-        return true;
+        return turnViews.size() >= 8;
+    }
+
+    /** Angle of the view that matches the home photo (the third one: front, slight turn, home photo...). */
+    private float start() {
+        return 360f / turnViews.size() * (turnViews.size() >= 16 || turnViews.size() == 15 ? 2 : 1);
     }
 
     // ---------- Layout ----------
@@ -205,18 +213,20 @@ public class Stage extends View {
         img.setAlpha(base);
     }
 
-    /** Eight real views: each holds, then cross-fades into the next while the body narrows slightly. */
+    /** Real views all around: each holds briefly, then cross-fades into the next. */
     private void turn360(Canvas c) {
-        int seg = (int) (angle / 45f) % 8;
-        float t = (angle % 45f) / 45f;
+        int n = turnViews.size();
+        float step = 360f / n;
+        int seg = (int) (angle / step) % n;
+        float t = (angle % step) / step;
         int base = img.getAlpha();
-        if (t < 0.75f) {
-            view(c, turn8[seg], 1f, base);
+        float hold = n >= 15 ? 0.55f : 0.75f;
+        if (t < hold) {
+            view(c, turnViews.get(seg), 1f, base);
         } else {
-            float u = (t - 0.75f) / 0.25f, e = u * u * (3 - 2 * u);   // smoothstep
-            float sx = 1f - 0.05f * (float) Math.sin(u * Math.PI);
-            view(c, turn8[seg], sx, Math.round(base * (1 - e)));
-            view(c, turn8[(seg + 1) % 8], sx, Math.round(base * e));
+            float u = (t - hold) / (1 - hold), e = u * u * (3 - 2 * u);   // smoothstep
+            view(c, turnViews.get(seg), 1f, Math.round(base * (1 - e)));
+            view(c, turnViews.get((seg + 1) % n), 1f, Math.round(base * e));
         }
         img.setAlpha(base);
     }
