@@ -1,0 +1,55 @@
+name: GHOST GOLD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: "platforms;android-33 build-tools;36.0.0"
+
+      # Michroma + Barlow (SIL Open Font License) from Google Fonts.
+      - name: Fonts
+        run: |
+          mkdir -p assets/fonts
+          b=https://raw.githubusercontent.com/google/fonts/main/ofl
+          curl -sSfL -o assets/fonts/Michroma-Regular.ttf $b/michroma/Michroma-Regular.ttf
+          curl -sSfL -o assets/fonts/Barlow-Light.ttf     $b/barlow/Barlow-Light.ttf
+          curl -sSfL -o assets/fonts/Barlow-Regular.ttf   $b/barlow/Barlow-Regular.ttf
+          curl -sSfL -o assets/fonts/OFL-Michroma.txt     $b/michroma/OFL.txt
+          curl -sSfL -o assets/fonts/OFL-Barlow.txt       $b/barlow/OFL.txt
+
+      - name: Build
+        env:
+          BUILD_TOOLS: "36.0.0"
+        run: sh build.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GhostGold-${{ github.sha }}
+          path: out/GhostGold.apk
+
+      # Fixed download link: https://github.com/<owner>/GhostGold/releases/download/latest/GhostGold.apk
+      - name: Publish
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view latest >/dev/null 2>&1 || gh release create latest --prerelease \
+            --target "$GITHUB_SHA" --title "GHOST GOLD" --notes "Última versión"
+          gh release upload latest out/GhostGold.apk --clobber
+          gh release edit latest --notes "Última versión · commit ${GITHUB_SHA::7}"

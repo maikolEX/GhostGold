@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.maikolex.ghostgold"
+    android:versionCode="1"
+    android:versionName="1.0">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" />
+
+    <application
+        android:label="GHOST GOLD"
+        android:icon="@drawable/icon"
+        android:theme="@style/GhostGold">
+
+        <activity
+            android:name=".HomeActivity"
+            android:launchMode="singleTask"
+            android:stateNotNeeded="true"
+            android:clearTaskOnLaunch="true"
+            android:excludeFromRecents="true"
+            android:screenOrientation="landscape"
+            android:configChanges="orientation|screenSize|keyboardHidden|locale">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".RadioActivity" android:label="Radio" android:launchMode="singleTask"
+            android:screenOrientation="landscape" android:configChanges="orientation|screenSize|keyboardHidden|locale" />
+        <activity android:name=".PhoneActivity" android:label="Teléfono" android:launchMode="singleTask"
+            android:screenOrientation="landscape" android:configChanges="orientation|screenSize|keyboardHidden|locale" />
+        <activity android:name=".GarageActivity" android:label="Mantenimiento"
+            android:screenOrientation="landscape" android:configChanges="orientation|screenSize|keyboardHidden|locale" />
+        <activity android:name=".SettingsActivity" android:label="Ajustes"
+            android:screenOrientation="landscape" android:configChanges="orientation|screenSize|keyboardHidden|locale" />
+        <activity android:name=".AppsActivity" android:label="Apps" android:excludeFromRecents="true"
+            android:screenOrientation="landscape" android:configChanges="orientation|screenSize|keyboardHidden|locale" />
+        <activity android:name=".NightActivity" android:excludeFromRecents="true" android:theme="@style/GhostGold.Full"
+            android:screenOrientation="landscape" android:configChanges="orientation|screenSize|keyboardHidden|locale" />
+        <activity android:name=".ByeActivity" android:excludeFromRecents="true" android:launchMode="singleInstance"
+            android:theme="@style/GhostGold.Full"
+            android:screenOrientation="landscape" android:configChanges="orientation|screenSize|keyboardHidden|locale" />
+
+        <service android:name=".CarService" />
+        <service android:name=".Panel" />
+        <service android:name=".VolumeHud" />
+        <service
+            android:name=".MediaListener"
+            android:label="GHOST GOLD"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+
+        <receiver android:name=".CarService$Boot">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>
