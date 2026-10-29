@@ -46,6 +46,7 @@ public class HomeActivity extends Activity implements Media.Listener {
     private FrameLayout stageBox, intro;
     private Stage stage;
     private Road road;
+    private Scenery scenery;
     private View rail, railLine, caption;
     private final List<View> hud = new ArrayList<>();
 
@@ -166,6 +167,9 @@ public class HomeActivity extends Activity implements Media.Listener {
 
     private FrameLayout buildStage() {
         FrameLayout s = new FrameLayout(this);
+        scenery = new Scenery(this);
+        scenery.setNight(night);
+        s.addView(scenery, new FrameLayout.LayoutParams(-1, -1));
         stage = new Stage(this);
         stage.setNight(night);
         s.addView(stage, new FrameLayout.LayoutParams(-1, -1));
@@ -514,6 +518,7 @@ public class HomeActivity extends Activity implements Media.Listener {
 
     private void drive(boolean on) {
         driving = on;
+        scenery.setDriving(on);
         if (showroom) toggleShowroom();
         if (on) {
             road.setVisibility(View.VISIBLE);
@@ -657,6 +662,7 @@ public class HomeActivity extends Activity implements Media.Listener {
             tyresLabel.setText(Tyres.known() ? "LLANTAS · TPMS" : "LLANTAS · TOCA PARA VER");
             if (road.ready()) {
                 road.speed(v);
+                scenery.setSpeed(v);
                 if (v >= 8) { fast++; slow = 0; } else { slow++; fast = 0; }
                 if (!driving && fast >= 3) drive(true);
                 else if (driving && slow >= 8) drive(false);

@@ -31,7 +31,8 @@ public class Road extends View {
             under = new Paint(Paint.ANTI_ALIAS_FLAG), shadow = new Paint(Paint.ANTI_ALIAS_FLAG),
             img = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG),
             tyre = new Paint(Paint.ANTI_ALIAS_FLAG), tyreShade = new Paint(Paint.ANTI_ALIAS_FLAG),
-            lamp = new Paint(Paint.ANTI_ALIAS_FLAG);
+            lamp = new Paint(Paint.ANTI_ALIAS_FLAG), post = new Paint(Paint.ANTI_ALIAS_FLAG),
+            reflector = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Path road = new Path();
     private final RectF car = new RectF(), r = new RectF();
     private final Matrix m = new Matrix(), tm = new Matrix();
@@ -119,6 +120,21 @@ public class Road extends View {
                 dash.setAlpha(Math.round(255 * Math.min(1f, p / 0.12f)));
                 dash.setStrokeWidth(G.dp(getContext(), 5) * s);
                 c.drawLine(vx + (x1 - vx) * s, vy + (y1 - vy) * s, vx + (x2 - vx) * s, vy + (y2 - vy) * s, dash);
+            }
+        }
+
+        // Roadside posts with gold reflectors rushing past.
+        for (int side = -1; side <= 1; side += 2) {
+            for (int i = 0; i < 5; i++) {
+                float p = (phase * 0.8f + i * 0.2f) % 1f, s = 0.02f + 1.4f * p * p;
+                float x = vx + side * w * 0.62f * s, y = vy + (h * 0.98f - vy) * s, tall = G.dp(getContext(), 110) * s;
+                int a = Math.round(255 * Math.min(1f, p / 0.15f));
+                post.setStrokeWidth(Math.max(1, G.dp(getContext(), 6) * s));
+                post.setColor(0x1D1A12 | (a << 24));
+                c.drawLine(x, y, x, y - tall, post);
+                reflector.setColor(0xFFD700 | (a << 24));
+                float rw = G.dp(getContext(), 3) * s;
+                c.drawRect(x - rw, y - tall, x + rw, y - tall + G.dp(getContext(), 12) * s, reflector);
             }
         }
 
