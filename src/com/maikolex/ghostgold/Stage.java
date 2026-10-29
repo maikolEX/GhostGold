@@ -24,6 +24,7 @@ import android.view.animation.LinearInterpolator;
 public class Stage extends View {
 
     private final Bitmap front, lights, rear;
+    private final Bitmap[] turn8 = new Bitmap[8]; // 360° views every 45°, starting from the front
     private Bitmap mirrored;
     private float lightsOn;     // 0..1 cross-fade to the headlights photo
     private float dim = 1f;     // halo strength (lower at night)
@@ -46,6 +47,7 @@ public class Stage extends View {
         front = load(c, "car");
         lights = load(c, "car_lights");
         rear = load(c, "car_rear");
+        for (int i = 0; i < 8; i++) turn8[i] = load(c, "spin_" + i);
         orbit.setStyle(Paint.Style.STROKE);
         orbit.setStrokeWidth(G.dp(c, 1));
         fade.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_IN));
@@ -70,12 +72,13 @@ public class Stage extends View {
         if (turn != null) turn.cancel();
         if (!on) { angle = -1f; sweep = -1f; breathe = 0; invalidate(); return; }
         // One clock drives everything: a full turn every 16 s; sweep and breathing ride on it.
-        turn = ValueAnimator.ofFloat(0f, 1f).setDuration(16000);
+        turn = ValueAnimator.ofFloat(0f, 1f).setDuration(24000); // 3 s per view
         turn.setRepeatCount(ValueAnimator.INFINITE);
         turn.setInterpolator(new LinearInterpolator());
         turn.addUpdateListener(a -> {
             float t = (float) a.getAnimatedValue();
-            angle = rear != null ? t * 360f : -1f;
+            // Start from view 1 (the photo on the home screen) so the turn begins without a jump.
+            angle = full() ? (45f + t * 360f) % 360f : rear != null ? t * 360f : -1f;
             float s = (t * 4f) % 1f;            // four sweeps per turn, one per view
             sweep = s < 0.55f ? s / 0.55f : -1f;
             breathe = (float) (0.5 - 0.5 * Math.cos(t * Math.PI * 6));
@@ -85,6 +88,11 @@ public class Stage extends View {
     }
 
     RectF truck() { return box; }
+
+    private boolean full() {
+        for (Bitmap b : turn8) if (b == null) return false;
+        return true;
+    }
 
     // ---------- Layout ----------
 
@@ -135,25 +143,25 @@ public class Stage extends View {
 
         // Reflection.
         float refl = box.height() * 0.32f;
-        int layer = c.saveLayer(box.left - box.width() * 0.1f, box.bottom, box.right + box.width() * 0.1f, box.bottom + refl, null);
+        int layer = c.saveLayer(0, box.bottom, getWidth(), box.bottom + refl, null);
         c.save();
         c.scale(1f, -1f, cx, box.bottom);
         img.setAlpha(70);
         truck(c);
         c.restore();
         fade.setShader(new LinearGradient(0, box.bottom, 0, box.bottom + refl, 0xFF000000, 0, Shader.TileMode.CLAMP));
-        c.drawRect(box.left - box.width() * 0.1f, box.bottom, box.right + box.width() * 0.1f, box.bottom + refl, fade);
+        c.drawRect(0, box.bottom, getWidth(), box.bottom + refl, fade);
         c.restoreToCount(layer);
 
         // The truck, with the showroom light sweep clipped to its paint.
         img.setAlpha(255);
         if (sweep >= 0) {
-            int l2 = c.saveLayer(box.left, box.top, box.right, box.bottom, null);
+            int l2 = c.saveLayer(0, box.top, getWidth(), box.bottom, null);
             truck(c);
             float x = box.left - box.width() * 0.2f + box.width() * 1.4f * sweep, band = box.width() * 0.18f;
             shine.setShader(new LinearGradient(x - band, box.top, x + band, box.bottom,
                     new int[]{0x00FFF1BF, 0x66FFF1BF, 0x00FFF1BF}, null, Shader.TileMode.CLAMP));
-            c.drawRect(box, shine);
+            c.drawRect(0, box.top, getWidth(), box.bottom, shine);
             c.restoreToCount(l2);
         } else {
             truck(c);
@@ -162,6 +170,7 @@ public class Stage extends View {
 
     /** Draws the current view of the truck into the box. */
     private void truck(Canvas c) {
+        if (angle >= 0 && full()) { turn360(c); return; }
         Bitmap b = front;
         float sx = 1f;
         if (angle >= 0) {
@@ -194,6 +203,32 @@ public class Stage extends View {
             blit(c, b, sx);
         }
         img.setAlpha(base);
+    }
+
+    /** Eight real views: each holds, then cross-fades into the next while the body narrows slightly. */
+    private void turn360(Canvas c) {
+        int seg = (int) (angle / 45f) % 8;
+        float t = (angle % 45f) / 45f;
+        int base = img.getAlpha();
+        if (t < 0.75f) {
+            view(c, turn8[seg], 1f, base);
+        } else {
+            float u = (t - 0.75f) / 0.25f, e = u * u * (3 - 2 * u);   // smoothstep
+            float sx = 1f - 0.05f * (float) Math.sin(u * Math.PI);
+            view(c, turn8[seg], sx, Math.round(base * (1 - e)));
+            view(c, turn8[(seg + 1) % 8], sx, Math.round(base * e));
+        }
+        img.setAlpha(base);
+    }
+
+    /** One view standing on the floor line, as tall as the box unless it would be too wide. */
+    private void view(Canvas c, Bitmap b, float sx, int alpha) {
+        float ar = b.getWidth() / (float) b.getHeight();
+        float hh = box.height(), ww = hh * ar, maxW = getWidth() * 0.72f;
+        if (ww > maxW) { ww = maxW; hh = ww / ar; }
+        fit.set(box.centerX() - ww / 2, box.bottom - hh, box.centerX() + ww / 2, box.bottom);
+        img.setAlpha(alpha);
+        blit(c, b, sx);
     }
 
     private void blit(Canvas c, Bitmap b, float sx) {
