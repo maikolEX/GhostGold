@@ -53,6 +53,14 @@ public class SettingsActivity extends Activity {
         });
         row("Kilometraje", Car.odoSet(this) ? Car.fmt(Car.km(this)) + " km" : "Poner kilometraje",
                 () -> startActivity(new Intent(this, GarageActivity.class)));
+        float[] eco = Fuel.economy(this);
+        row("Combustible", eco[1] > 0 ? String.format(java.util.Locale.US, "%.1f km/L promedio", eco[1]) : "Registrar cargas y ver rendimiento real",
+                () -> startActivity(new Intent(this, FuelActivity.class)));
+        row("Sonido de arranque", Chime.enabled(this) ? "Activado · toca para apagarlo" : "Apagado · toca para activarlo", () -> {
+            Chime.setEnabled(this, !Chime.enabled(this));
+            if (Chime.enabled(this)) Chime.play(this);
+            show();
+        });
 
         section("Permisos");
         check("Pantalla de inicio", isHome(), "Elige GHOST GOLD como inicio",

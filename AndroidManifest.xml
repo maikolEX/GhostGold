@@ -38,6 +38,8 @@
             android:screenOrientation="landscape" android:configChanges="orientation|screenSize|keyboardHidden|locale" />
         <activity android:name=".GarageActivity" android:label="Mantenimiento"
             android:screenOrientation="landscape" android:configChanges="orientation|screenSize|keyboardHidden|locale" />
+        <activity android:name=".FuelActivity" android:label="Combustible"
+            android:screenOrientation="landscape" android:configChanges="orientation|screenSize|keyboardHidden|locale" />
         <activity android:name=".SettingsActivity" android:label="Ajustes"
             android:screenOrientation="landscape" android:configChanges="orientation|screenSize|keyboardHidden|locale" />
         <activity android:name=".AppsActivity" android:label="Apps" android:excludeFromRecents="true"

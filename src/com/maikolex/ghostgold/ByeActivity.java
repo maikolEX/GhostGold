@@ -57,7 +57,11 @@ public class ByeActivity extends Activity {
         stats.addView(stat("Duración", duration(Car.tripMillis(this))));
         stats.addView(stat("Promedio", (hours > 0 ? Math.round(km / hours) : 0) + " km/h"));
         stats.addView(stat("Máxima", Car.tripMax(this) + " km/h"));
-        stats.addView(stat("Combustible aprox.", String.format(Locale.US, "%.1f L", km * Car.L_PER_100 / 100f)));
+        float litres = km * Fuel.lPer100(this) / 100f;
+        java.util.List<Fuel.Fill> fills = Fuel.all(this);
+        float price = fills.isEmpty() ? 0 : fills.get(fills.size() - 1).pricePerLitre();
+        stats.addView(stat("Combustible aprox.", String.format(Locale.US, "%.1f L", litres)
+                + (price > 0 ? " · ₡" + Car.fmt(Math.round(litres * price)) : "")));
         LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(-2, -2);
         slp.topMargin = G.dp(this, 26);
         c.addView(stats, slp);

@@ -22,8 +22,9 @@ final class Rules {
         return Calendar.MONDAY + (d - 1) / 2; // 1-2 Mon, 3-4 Tue, 5-6 Wed, 7-8 Thu, 9 Fri
     }
 
+    /** Restricted that day: the plate's weekday, unless it is a holiday or a usual MOPT break. */
     private static boolean on(Context c, Calendar when) {
-        return when.get(Calendar.DAY_OF_WEEK) == day(Store.plate(c));
+        return when.get(Calendar.DAY_OF_WEEK) == day(Store.plate(c)) && Feriados.on(when) == null;
     }
 
     static boolean today(Context c) {
@@ -46,6 +47,13 @@ final class Rules {
     }
 
     static String line(Context c) {
+        Calendar now = Calendar.getInstance();
+        Feriados.Day f = Feriados.on(now);
+        boolean plateDay = now.get(Calendar.DAY_OF_WEEK) == day(Store.plate(c));
+        if (f != null && plateDay) {
+            return f.probable ? "Sin restricción por " + f.name + " · confirma con el MOPT"
+                    : "Feriado (" + f.name + ") · hoy circulas";
+        }
         if (!today(c)) return "Hoy circulas · tu restricción: " + dayName(c);
         int h = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
         if (h < FROM) return "Hoy no circulas en San José · desde las 6:00";

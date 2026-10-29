@@ -576,6 +576,7 @@ public class HomeActivity extends Activity implements Media.Listener {
     /** Seal draws, name lights up, then the truck emerges and flashes its headlights twice. */
     private void playIntro() {
         introAt = SystemClock.elapsedRealtime();
+        Chime.play(this);
         if (showroom) toggleShowroom();
         Emblem e = intro.findViewWithTag("e");
         View w1 = intro.findViewWithTag("w1"), line = intro.findViewWithTag("line"),

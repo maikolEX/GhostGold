@@ -33,6 +33,10 @@ public class GarageActivity extends Activity {
         G.press(odo);
         odo.setOnClickListener(v -> ask("Kilometraje del tablero", Car.km(this), km -> Car.setKm(this, km)));
         head.addView(odo);
+        TextView fuel = G.chip(this, "Combustible", () -> startActivity(new android.content.Intent(this, FuelActivity.class)));
+        LinearLayout.LayoutParams fl = new LinearLayout.LayoutParams(-2, -2);
+        fl.leftMargin = G.dp(this, 12);
+        head.addView(fuel, fl);
         root.addView(head);
         ScrollView sv = new ScrollView(this);
         list = G.column(this);
