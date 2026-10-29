@@ -67,46 +67,80 @@ public class PhoneActivity extends Activity {
         sv.addView(lists);
         body.addView(sv, new LinearLayout.LayoutParams(0, -1, 1f));
 
-        // Right: dial pad.
-        LinearLayout pad = G.column(this);
-        pad.setGravity(Gravity.CENTER_HORIZONTAL);
-        pad.setPadding(G.dp(this, 24), 0, 0, 0);
-        LinearLayout disp = G.row(this);
-        number = G.value(this, "", 40, G.WHITE);
+        // Right: the GHOST GOLD dial, twelve keys on a ring around the number and the gold call button.
+        body.addView(dial());
+        setContentView(root);
+    }
+
+    /** Keys laid out like a watch face (1 at the top, clockwise), number and call in the centre. */
+    private View dial() {
+        int size = G.dp(this, 470), cx = size / 2, keySize = G.dp(this, 66), r = G.dp(this, 172);
+        android.widget.FrameLayout f = new android.widget.FrameLayout(this);
+        f.setLayoutParams(new LinearLayout.LayoutParams(size, size));
+        View core = new View(this) {
+            private final android.graphics.Paint p = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+            @Override protected void onDraw(android.graphics.Canvas c) {
+                float m = getWidth() / 2f, d = G.dp(getContext(), 1);
+                p.setStyle(android.graphics.Paint.Style.FILL);
+                p.setShader(new android.graphics.RadialGradient(m, m, m * 0.86f, new int[]{0xFF111111, 0xFF0A0A0A, G.VOID},
+                        new float[]{0, 0.6f, 1}, android.graphics.Shader.TileMode.CLAMP));
+                c.drawCircle(m, m, m * 0.86f, p);
+                p.setShader(null);
+                p.setStyle(android.graphics.Paint.Style.STROKE);
+                p.setStrokeWidth(d);
+                p.setColor(0x40D4AF37);
+                c.drawCircle(m, m, m * 0.98f, p);
+                p.setColor(0x2ED4AF37);
+                p.setPathEffect(new android.graphics.DashPathEffect(new float[]{d, 6 * d}, 0));
+                c.drawCircle(m, m, m * 0.42f, p);
+                p.setPathEffect(null);
+            }
+        };
+        f.addView(core, new android.widget.FrameLayout.LayoutParams(size, size));
+        String[] keys = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "0", "#"};
+        for (int i = 0; i < keys.length; i++) {
+            String d = keys[i];
+            double a = i / (double) keys.length * Math.PI * 2 - Math.PI / 2;
+            TextView key = G.value(this, d, 26, G.WHITE);
+            key.setGravity(Gravity.CENTER);
+            key.setBackground(G.round(0, G.HAIR, G.dp(this, 1)));
+            G.press(key);
+            key.setOnClickListener(v -> { if (number.length() < 15) number.append(d); hint(); });
+            android.widget.FrameLayout.LayoutParams lp = new android.widget.FrameLayout.LayoutParams(keySize, keySize);
+            lp.leftMargin = (int) (cx + Math.cos(a) * r - keySize / 2f);
+            lp.topMargin = (int) (cx + Math.sin(a) * r - keySize / 2f);
+            f.addView(key, lp);
+        }
+        LinearLayout mid = G.column(this);
+        mid.setGravity(Gravity.CENTER_HORIZONTAL);
+        number = G.value(this, "", 28, G.WHITE);
         number.setGravity(Gravity.CENTER);
-        disp.addView(number, new LinearLayout.LayoutParams(0, -2, 1f));
-        disp.addView(G.button(this, Glyph.BACKSPACE, 48, false, () -> {
+        mid.addView(number, new LinearLayout.LayoutParams(G.dp(this, 210), -2));
+        hint = G.label(this, "Marca un número");
+        hint.setTextSize(7);
+        hint.setGravity(Gravity.CENTER);
+        hint.setSingleLine(false);
+        hint.setMaxLines(2);
+        hint.setLineSpacing(0, 1.5f);
+        hint.setPadding(0, G.dp(this, 6), 0, G.dp(this, 12));
+        mid.addView(hint, new LinearLayout.LayoutParams(G.dp(this, 190), -2));
+        View call = G.button(this, Glyph.CALL, 68, true, this::callTyped);
+        call.setOnLongClickListener(v -> { saveFavourite(number.getText().toString()); return true; });
+        mid.addView(call, new LinearLayout.LayoutParams(G.dp(this, 68), G.dp(this, 68)));
+        f.addView(mid, new android.widget.FrameLayout.LayoutParams(-2, -2, Gravity.CENTER));
+        View bk = G.button(this, Glyph.BACKSPACE, 48, false, () -> {
             String s = number.getText().toString();
             if (!s.isEmpty()) number.setText(s.substring(0, s.length() - 1));
-        }));
-        pad.addView(disp, new LinearLayout.LayoutParams(G.dp(this, 420), G.dp(this, 64)));
-        String[] keys = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "0", "#"};
-        for (int r = 0; r < 4; r++) {
-            LinearLayout line = G.row(this);
-            for (int k = 0; k < 3; k++) {
-                String d = keys[r * 3 + k];
-                TextView key = G.value(this, d, 30, G.WHITE);
-                key.setGravity(Gravity.CENTER);
-                key.setBackground(G.round(0, G.HAIR, G.dp(this, 1)));
-                G.press(key);
-                key.setOnClickListener(v -> number.append(d));
-                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(G.dp(this, 76), G.dp(this, 76));
-                lp.setMargins(G.dp(this, 14), G.dp(this, 6), G.dp(this, 14), G.dp(this, 6));
-                line.addView(key, lp);
-            }
-            pad.addView(line);
-        }
-        View call = G.button(this, Glyph.CALL, 72, true, this::callTyped);
-        call.setOnLongClickListener(v -> { saveFavourite(number.getText().toString()); return true; });
-        LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(G.dp(this, 72), G.dp(this, 72));
-        clp.topMargin = G.dp(this, 10);
-        pad.addView(call, clp);
-        TextView hint = G.label(this, "Mantén presionado para guardar en favoritos");
-        hint.setTextSize(8);
-        hint.setPadding(0, G.dp(this, 8), 0, 0);
-        pad.addView(hint);
-        body.addView(pad);
-        setContentView(root);
+            hint();
+        });
+        f.addView(bk, new android.widget.FrameLayout.LayoutParams(G.dp(this, 48), G.dp(this, 48), Gravity.BOTTOM | Gravity.END));
+        return f;
+    }
+
+    private TextView hint;
+
+    private void hint() {
+        hint.setText(number.length() == 0 ? "MARCA UN NÚMERO" : "TOCA EL BOTÓN DORADO · MANTENLO PARA GUARDAR EN FAVORITOS");
     }
 
     // ---------- Calls ----------
