@@ -51,6 +51,8 @@ public class HomeActivity extends Activity implements Media.Listener {
 
     private TextView greet, restrictText, temp, sky, place, speed, odo, band, freq, src, title, artist, status;
     private ImageView skyIcon, play;
+    private TyreMap tyreMap;
+    private TextView tyresLabel;
     private View restrictDot;
     private GradientDrawable restrictBg;
 
@@ -347,18 +349,14 @@ public class HomeActivity extends Activity implements Media.Listener {
         odo.setPadding(0, G.dp(this, 6), 0, 0);
         c.addView(odo);
 
-        LinearLayout tyres = G.row(this);
+        LinearLayout tyres = G.column(this);
         tyres.setPadding(0, G.dp(this, 18), 0, 0);
-        ImageView ti = new ImageView(this);
-        ti.setImageDrawable(new Glyph(this, Glyph.TYRE, G.GOLD));
-        tyres.addView(ti, new LinearLayout.LayoutParams(G.dp(this, 24), G.dp(this, 24)));
-        LinearLayout tt = G.column(this);
-        tt.setPadding(G.dp(this, 10), 0, 0, 0);
-        tt.addView(G.label(this, "Llantas · TPMS"));
-        TextView see = G.text(this, "Ver presión", 15, G.TEXT);
-        see.setPadding(0, G.dp(this, 4), 0, 0);
-        tt.addView(see);
-        tyres.addView(tt);
+        tyresLabel = G.label(this, "Llantas · TPMS");
+        tyres.addView(tyresLabel);
+        tyreMap = new TyreMap(this);
+        LinearLayout.LayoutParams tm = new LinearLayout.LayoutParams(G.dp(this, 170), G.dp(this, 96));
+        tm.topMargin = G.dp(this, 8);
+        tyres.addView(tyreMap, tm);
         G.press(tyres);
         tyres.setOnClickListener(x -> { if (!Head.open(this, Head.TPMS)) toast("Pantalla de TPMS no disponible"); });
         c.addView(tyres);
@@ -655,6 +653,8 @@ public class HomeActivity extends Activity implements Media.Listener {
             tick++;
             int v = kmh();
             speed.setText(String.valueOf(v));
+            tyreMap.invalidate();
+            tyresLabel.setText(Tyres.known() ? "LLANTAS · TPMS" : "LLANTAS · TOCA PARA VER");
             if (road.ready()) {
                 road.speed(v);
                 if (v >= 8) { fast++; slow = 0; } else { slow++; fast = 0; }
